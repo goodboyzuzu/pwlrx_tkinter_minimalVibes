@@ -12,7 +12,11 @@ def process_log_files(files):
     Process log files to find the SELECTED_BLK_COUNT value.
     """
     end_marker = "(.)"
-    for fp in files:
+    max_iterations = 20
+    for i, fp in enumerate(files):
+        if i >= max_iterations:
+            return "exceed max limit. find cycle value manually"
+            break
         try:
             file_size = os.path.getsize(fp)
             if file_size > 40000 or file_size < 880:  # Skip files >40KB or <1KB

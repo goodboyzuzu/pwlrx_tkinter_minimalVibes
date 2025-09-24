@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from tkinter import ttk, font as tkfont
 import os
+from datetime import datetime, timezone  # Updated import to include timezone
 from .utils import get_matching_directories, process_log_files
 
 LOGS_DIRECTORY = R"C:\Users\gohzu\Desktop\pwlrx_tkinter_minimalVibe\n69r"
@@ -34,11 +35,13 @@ class LogFinder(ctk.CTkFrame):
         ttk.Style().configure("Treeview.Heading", font=heading_font)
 
 
-        self.tree = ttk.Treeview(table_row, columns=("log_folder", "cycle_count", "offset"), show="headings")
+        self.tree = ttk.Treeview(table_row, columns=("log_folder", "date", "cycle_count", "offset"), show="headings")
         self.tree.heading("log_folder", text="Log Folder", anchor="center")
+        self.tree.heading("date", text="Date", anchor="center")  # Added new column heading
         self.tree.heading("cycle_count", text="Cycle Count", anchor="center")
         self.tree.heading("offset", text="Offset", anchor="center")
         self.tree.column("log_folder", width=400, anchor="center")  # Center align values
+        self.tree.column("date", width=150, anchor="center")  # Added new column width
         self.tree.column("cycle_count", anchor="center")  # Center align values
         self.tree.column("offset", anchor="center")  # Center align values
         self.tree.pack(fill="both", expand=True)
@@ -67,9 +70,17 @@ class LogFinder(ctk.CTkFrame):
             except Exception:
                 files = []
 
+            # Extract Unix timestamp from directory name and convert to date
+            try:
+                timestamp = int(d.split(".")[-1])  # Extract the last part of the directory name
+                date_str = datetime.fromtimestamp(timestamp, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+            except ValueError:
+                date_str = "Invalid Date"
+
             # Process log files and get cycle value
             cycle_val = process_log_files(files)
-            self.tree.insert("", "end", values=(d, cycle_val, "-"))
+            cycle = cycle_val.split("_")[0] if "_" in cycle_val else cycle_val  # Extract only the {cycle} part
+            self.tree.insert("", "end", values=(d, date_str, cycle, "-"))  # Insert {cycle} into the tree
 
         # Prevent Text widget from inserting a newline when called from a key binding
         if event is not None:
