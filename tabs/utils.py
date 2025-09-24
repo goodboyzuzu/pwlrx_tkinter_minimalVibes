@@ -51,6 +51,10 @@ def process_log_files(files):
                         if end_marker_found and "SELECTED_BLK_COUNT" in line:
                             print("Found in file")
                             return line
+
+                    # If end_marker is found but no "SELECTED_BLK_COUNT", return immediately
+                    if end_marker_found:
+                        return "No cycle in log"
         except Exception:
             continue
     return "-"

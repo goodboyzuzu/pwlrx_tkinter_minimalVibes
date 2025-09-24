@@ -4,7 +4,8 @@ import os
 from datetime import datetime, timezone  # Updated import to include timezone
 from .utils import get_matching_directories, process_log_files
 
-LOGS_DIRECTORY = R"C:\Users\gohzu\Desktop\pwlrx_tkinter_minimalVibe\n69r"
+LOGS_DIRECTORY = r"\\fsnvemaffs\nve_maf\axcel\pwlrx_n69r"
+# LOGS_DIRECTORY = r"C:\Users\gohzu\Desktop\pwlrx_tkinter_minimalVibe\n69r"
 
 class LogFinder(ctk.CTkFrame):
     def __init__(self, parent):
@@ -80,11 +81,29 @@ class LogFinder(ctk.CTkFrame):
             # Process log files and get cycle value
             cycle_val = process_log_files(files)
             cycle = cycle_val.split("_")[0] if "_" in cycle_val else cycle_val  # Extract only the {cycle} part
-            self.tree.insert("", "end", values=(d, date_str, cycle, "-"))  # Insert {cycle} into the tree
+
+            # Determine tag based on the first 10 characters of log_folder
+            tag = d[:10]
+            self.tree.insert("", "end", values=(d, date_str, cycle, "-"), tags=(tag,))
+
+        # Apply unique colors to rows sharing the same first 10 characters
+        self._apply_row_highlighting()
 
         # Prevent Text widget from inserting a newline when called from a key binding
         if event is not None:
             return "break"
+
+    def _apply_row_highlighting(self):
+        # Get all tags and assign colors
+        tags = self.tree.tag_has("")
+        colors = {}
+        color_palette = ["#FFCCCC", "#CCFFCC", "#CCCCFF", "#FFFFCC", "#CCFFFF", "#FFCCFF"]
+        for i, tag in enumerate(set(tags)):
+            colors[tag] = color_palette[i % len(color_palette)]
+
+        # Apply colors to rows based on their tags
+        for tag, color in colors.items():
+            self.tree.tag_configure(tag, background=color)
 
     def _on_double_click(self, event):
         # Destroy existing editor if any
@@ -105,6 +124,9 @@ class LogFinder(ctk.CTkFrame):
         if not bbox:
             return
         x, y, width, height = bbox
+
+        # Shift bbox to the left by 5 pixels
+        x -= 5
 
         # Map column token like "#1" to actual column name used in tree["columns"]
         try:
@@ -134,9 +156,10 @@ class LogFinder(ctk.CTkFrame):
     def _save_edit(self, row_id, col_name):
         if self._edit_entry:
             # Get the new value from the entry widget
-            new_value = self._edit_entry.get()
-            # Update the Treeview with the new value
-            self.tree.set(row_id, column=col_name, value=new_value)
+            new_value = self._edit_entry.get().strip()  # Strip whitespace from the new value
+            if new_value:  # Only update if the new value is not empty
+                # Update the Treeview with the new value
+                self.tree.set(row_id, column=col_name, value=new_value)
             # Destroy the entry widget
             self._edit_entry.destroy()
             self._edit_entry = None

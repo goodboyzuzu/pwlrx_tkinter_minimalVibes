@@ -9,7 +9,7 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("PWLRX automation tool")
-        self.geometry("800x600")
+        self.geometry("900x700")
         self._build_ui()
 
     def _build_ui(self):
