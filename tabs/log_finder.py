@@ -84,26 +84,25 @@ class LogFinder(ctk.CTkFrame):
 
             # Determine tag based on the first 10 characters of log_folder
             tag = d[:10]
-            self.tree.insert("", "end", values=(d, date_str, cycle, "-"), tags=(tag,))
+            self.tree.insert("", "end", values=(d, date_str, cycle, "-"))
 
-        # Apply unique colors to rows sharing the same first 10 characters
-        self._apply_row_highlighting()
+        # Sort the table by log_folder column after inserting rows
+        self._sort_table("log_folder", reverse=False)
 
         # Prevent Text widget from inserting a newline when called from a key binding
         if event is not None:
             return "break"
 
-    def _apply_row_highlighting(self):
-        # Get all tags and assign colors
-        tags = self.tree.tag_has("")
-        colors = {}
-        color_palette = ["#FFCCCC", "#CCFFCC", "#CCCCFF", "#FFFFCC", "#CCFFFF", "#FFCCFF"]
-        for i, tag in enumerate(set(tags)):
-            colors[tag] = color_palette[i % len(color_palette)]
+    def _sort_table(self, column, reverse):
+        # Get all rows from the tree
+        rows = [(self.tree.set(k, column), k) for k in self.tree.get_children("")]
 
-        # Apply colors to rows based on their tags
-        for tag, color in colors.items():
-            self.tree.tag_configure(tag, background=color)
+        # Sort rows based on the column value
+        rows.sort(reverse=reverse, key=lambda x: x[0])
+
+        # Rearrange rows in the tree
+        for index, (val, k) in enumerate(rows):
+            self.tree.move(k, "", index)
 
     def _on_double_click(self, event):
         # Destroy existing editor if any
