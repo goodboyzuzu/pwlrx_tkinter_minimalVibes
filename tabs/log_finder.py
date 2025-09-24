@@ -110,10 +110,15 @@ class LogFinder(ctk.CTkFrame):
 
                                 if end_marker_found and "SELECTED_BLK_COUNT" in line:
                                     cycle_val = line
-                                    break
+                                    self.tree.insert("", "end", values=(d, cycle_val, "-"))
+                                    break # Exit the for loop
 
                             if cycle_val != "-":
-                                break
+                                print("break2")
+                                break # Exit the while loop
+                    if cycle_val != "-":
+                        print("break3")
+                        break # Exit the for fp in files loop
                 except Exception:
                     continue
 
