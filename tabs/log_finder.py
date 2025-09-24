@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from tkinter import ttk, font as tkfont
 import os
+from .utils import get_matching_directories, process_log_files
 
 LOGS_DIRECTORY = R"C:\Users\gohzu\Desktop\pwlrx_tkinter_minimalVibe\n69r"
 
@@ -53,76 +54,22 @@ class LogFinder(ctk.CTkFrame):
         # Get input lines
         lines = [line.strip() for line in self.textbox.get("1.0", "end").splitlines() if line.strip()]
 
-        # Ensure logs directory exists and filter to directories only
+        # Get matching directories
         try:
-            # make dirs to generator
-            dirs = (entry.name for entry in os.scandir(LOGS_DIRECTORY) if entry.is_dir())
+            dirs = get_matching_directories(LOGS_DIRECTORY, lines)
         except Exception:
-            dirs = iter([])
+            dirs = []
 
-        # Marker to check at end of file
-        end_marker = "Bin Results             1(.) 1001(9)"
-
-        matches = ((line, d) for d in dirs for line in lines if d.startswith(line))
-
-        for line, d in matches:
+        for d in dirs:
             folder_path = os.path.join(LOGS_DIRECTORY, d)
             try:
                 files = (os.path.join(folder_path, f) for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f)))
             except Exception:
                 files = []
-            cycle_val = "-"
-            for fp in files:
-                try:
-                    # Check file size
-                    file_size = os.path.getsize(fp)
-                    print(f"Checking file: {fp[0:10]}, size: {file_size} bytes")
-                    if file_size > 40000 or file_size < 880:  # Skip files >40KB or <1KB
-                        continue
 
-                    with open(fp, "rb") as fh:  # Open in binary mode for reverse reading
-                        end_marker_found = False
-                        cycle_val = "-"
-                        buffer_size = 1024  # Read in chunks of 1KB
-                        buffer = b""
-                        fh.seek(0, os.SEEK_END)  # Move to the end of the file
-                        position = fh.tell()
-
-                        while position > 0:
-                            read_size = min(buffer_size, position)
-                            position -= read_size
-                            fh.seek(position)
-                            chunk = fh.read(read_size)
-                            buffer = chunk + buffer  # Prepend the chunk to the buffer
-
-                            # Process lines in reverse order
-                            lines = buffer.splitlines()
-                            buffer = lines.pop(0) if position > 0 else b""  # Keep the incomplete line for the next chunk
-
-                            for line in reversed(lines):
-                                line = line.decode(errors="ignore").strip()
-                                if not line:
-                                    continue
-
-                                if not end_marker_found and line.endswith(end_marker):
-                                    end_marker_found = True
-                                    continue
-
-                                if end_marker_found and "SELECTED_BLK_COUNT" in line:
-                                    cycle_val = line
-                                    self.tree.insert("", "end", values=(d, cycle_val, "-"))
-                                    break # Exit the for loop
-
-                            if cycle_val != "-":
-                                print("break2")
-                                break # Exit the while loop
-                    if cycle_val != "-":
-                        print("break3")
-                        break # Exit the for fp in files loop
-                except Exception:
-                    continue
-
-                self.tree.insert("", "end", values=(d, cycle_val, "-"))
+            # Process log files and get cycle value
+            cycle_val = process_log_files(files)
+            self.tree.insert("", "end", values=(d, cycle_val, "-"))
 
         # Prevent Text widget from inserting a newline when called from a key binding
         if event is not None:
