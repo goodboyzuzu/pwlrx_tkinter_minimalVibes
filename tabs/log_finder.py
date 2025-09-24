@@ -27,14 +27,19 @@ class LogFinder(ctk.CTkFrame):
 
         table_row = ctk.CTkFrame(self)
         table_row.pack(fill="both", expand=True, pady=12, padx=12)
-        heading_font = tkfont.Font(weight="bold", size=12)
+
+        # Configure heading font (unchanged)
+        heading_font = tkfont.Font(weight="bold", size=9)
         ttk.Style().configure("Treeview.Heading", font=heading_font)
-        font = tkfont.Font(size= 9)
-        ttk.Style().configure("Treeview", font=font)
-        self.tree = ttk.Treeview(table_row, columns=("lot_id", "cycle_count", "offset"), show="headings")
-        self.tree.heading("lot_id", text="Lot ID")
-        self.tree.heading("cycle_count", text="Cycle Count")
-        self.tree.heading("offset", text="Offset")
+
+
+        self.tree = ttk.Treeview(table_row, columns=("log_folder", "cycle_count", "offset"), show="headings")
+        self.tree.heading("log_folder", text="Log Folder", anchor="center")
+        self.tree.heading("cycle_count", text="Cycle Count", anchor="center")
+        self.tree.heading("offset", text="Offset", anchor="center")
+        self.tree.column("log_folder", width=400, anchor="center")  # Center align values
+        self.tree.column("cycle_count", anchor="center")  # Center align values
+        self.tree.column("offset", anchor="center")  # Center align values
         self.tree.pack(fill="both", expand=True)
 
         self._edit_entry = None
@@ -43,33 +48,78 @@ class LogFinder(ctk.CTkFrame):
     # accept optional event so this can be used as a key binding callback
     def _search_logs(self, event=None):
         # Clear previous results
-        for iid in self.tree.get_children():
-            self.tree.delete(iid)
+        self.tree.delete(*self.tree.get_children())
 
         # Get input lines
-        raw_text = self.textbox.get("1.0", "end")
-        lines = [line.strip() for line in raw_text.split("\n") if line.strip()]
+        lines = [line.strip() for line in self.textbox.get("1.0", "end").splitlines() if line.strip()]
 
-        # Ensure logs directory exists
+        # Ensure logs directory exists and filter to directories only
         try:
-            entries = os.listdir(LOGS_DIRECTORY)
+            # make dirs to generator
+            dirs = (entry.name for entry in os.scandir(LOGS_DIRECTORY) if entry.is_dir())
         except Exception:
-            entries = []
+            dirs = iter([])
 
-        # Filter to directories only
-        dirs = [name for name in entries if os.path.isdir(os.path.join(LOGS_DIRECTORY, name))]
+        # Marker to check at end of file
+        end_marker = "Bin Results             1(.) 1001(9)"
 
-        for line in lines:
-            matches = [d for d in dirs if d.startswith(line)]
-            if matches:
-                for m in matches:
-                    # insert folder name; placeholder values for other columns
-                    self.tree.insert("", "end", values=(m, "0", "-"))
-            else:
-                # indicate not found for this query
-                self.tree.insert("", "end", values=(line, "Not found", "-"))
+        matches = ((line, d) for d in dirs for line in lines if d.startswith(line))
 
-        # when called from a key binding, prevent the Text widget from inserting a newline
+        for line, d in matches:
+            folder_path = os.path.join(LOGS_DIRECTORY, d)
+            try:
+                files = (os.path.join(folder_path, f) for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f)))
+            except Exception:
+                files = []
+            cycle_val = "-"
+            for fp in files:
+                try:
+                    # Check file size
+                    file_size = os.path.getsize(fp)
+                    print(f"Checking file: {fp[0:10]}, size: {file_size} bytes")
+                    if file_size > 40000 or file_size < 880:  # Skip files >40KB or <1KB
+                        continue
+
+                    with open(fp, "rb") as fh:  # Open in binary mode for reverse reading
+                        end_marker_found = False
+                        cycle_val = "-"
+                        buffer_size = 1024  # Read in chunks of 1KB
+                        buffer = b""
+                        fh.seek(0, os.SEEK_END)  # Move to the end of the file
+                        position = fh.tell()
+
+                        while position > 0:
+                            read_size = min(buffer_size, position)
+                            position -= read_size
+                            fh.seek(position)
+                            chunk = fh.read(read_size)
+                            buffer = chunk + buffer  # Prepend the chunk to the buffer
+
+                            # Process lines in reverse order
+                            lines = buffer.splitlines()
+                            buffer = lines.pop(0) if position > 0 else b""  # Keep the incomplete line for the next chunk
+
+                            for line in reversed(lines):
+                                line = line.decode(errors="ignore").strip()
+                                if not line:
+                                    continue
+
+                                if not end_marker_found and line.endswith(end_marker):
+                                    end_marker_found = True
+                                    continue
+
+                                if end_marker_found and "SELECTED_BLK_COUNT" in line:
+                                    cycle_val = line
+                                    break
+
+                            if cycle_val != "-":
+                                break
+                except Exception:
+                    continue
+
+                self.tree.insert("", "end", values=(d, cycle_val, "-"))
+
+        # Prevent Text widget from inserting a newline when called from a key binding
         if event is not None:
             return "break"
 
@@ -120,8 +170,10 @@ class LogFinder(ctk.CTkFrame):
 
     def _save_edit(self, row_id, col_name):
         if self._edit_entry:
+            # Get the new value from the entry widget
             new_value = self._edit_entry.get()
-            # Use the column name (not "#1") when setting the value
+            # Update the Treeview with the new value
             self.tree.set(row_id, column=col_name, value=new_value)
+            # Destroy the entry widget
             self._edit_entry.destroy()
             self._edit_entry = None
