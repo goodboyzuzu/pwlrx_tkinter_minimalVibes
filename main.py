@@ -1,4 +1,10 @@
 import customtkinter as ctk
+import sys
+import os
+
+# Ensure relative imports work when packaged
+sys.path.append(os.path.dirname(__file__))
+
 from tabs.log_finder import LogFinder
 
 ctk.set_appearance_mode("light")
@@ -22,8 +28,6 @@ class App(ctk.CTk):
 
         tabview.add("Tab 2")
         tabview.add("Tab 3")
-
-
 
 
 if __name__ == "__main__":
