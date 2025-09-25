@@ -2,3 +2,7 @@
 n69r/**
 n69r/.*
 n69r/
+
+// ignore build folder
+build/
+build/** 

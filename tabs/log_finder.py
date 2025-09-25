@@ -48,9 +48,19 @@ class LogFinder(ctk.CTkFrame):
         self.tree.column("date", width=120, anchor="center")  # wider for formatted date
         self.tree.column("cycle_count", anchor="center")
         self.tree.pack(fill="both", expand=True)
-
         self._edit_entry = None
         self.tree.bind("<Double-1>", self._on_double_click)
+
+        # add a bottom footer with the "Crunch Data" button
+        footer = ctk.CTkFrame(self)
+        footer.pack(side="bottom", fill="x", pady=8, padx=12)
+        crunch_btn = ctk.CTkButton(footer, text="Crunch Data", width=120, command=self._crunch_data)
+        crunch_btn.pack(side="bottom", pady=8)
+        
+
+    def _crunch_data(self):
+        # Intentionally does nothing (placeholder for future functionality)
+        return
 
     # accept optional event so this can be used as a key binding callback
     def _search_logs(self, event=None):
