@@ -4,8 +4,8 @@ import os
 from datetime import datetime, timezone  # Updated import to include timezone
 from .utils import get_matching_directories, process_log_files
 
-LOGS_DIRECTORY = r"\\fsnvemaffs\nve_maf\axcel\pwlrx_n69r"
-# LOGS_DIRECTORY = r"C:\Users\gohzu\Desktop\pwlrx_tkinter_minimalVibe\n69r"
+# LOGS_DIRECTORY = r"\\fsnvemaffs\nve_maf\axcel\pwlrx_n69r"
+LOGS_DIRECTORY = r"C:\Users\gohzu\Desktop\pwlrx_tkinter_minimalVibe\n69r"
 
 class LogFinder(ctk.CTkFrame):
     def __init__(self, parent):
@@ -36,15 +36,15 @@ class LogFinder(ctk.CTkFrame):
         ttk.Style().configure("Treeview.Heading", font=heading_font)
 
 
-        self.tree = ttk.Treeview(table_row, columns=("offset","log_folder", "date", "cycle_count"), show="headings")
+        self.tree = ttk.Treeview(table_row, columns=("offset", "log_folder", "date", "cycle_count"), show="headings")
+        self.tree.heading("offset", text="Offset", anchor="center")
         self.tree.heading("log_folder", text="Log Folder", anchor="center")
         self.tree.heading("date", text="Date", anchor="center")  # Added new column heading
         self.tree.heading("cycle_count", text="Cycle Count", anchor="center")
-        self.tree.heading("offset", text="Offset", anchor="center")
-        self.tree.column("log_folder", width=400, anchor="center")  # Center align values
-        self.tree.column("date", width=150, anchor="center")  # Added new column width
-        self.tree.column("cycle_count", anchor="center")  # Center align values
-        self.tree.column("offset", anchor="center")  # Center align values
+        self.tree.column("offset", width=50, anchor="center")
+        self.tree.column("log_folder", width=200, anchor="center")  # Center align values
+        self.tree.column("date", width=100, anchor="center")  # Added new column width
+        self.tree.column("cycle_count", width=50, anchor="center")
         self.tree.pack(fill="both", expand=True)
 
         # Add "Crunch Data" button below the table
@@ -88,7 +88,8 @@ class LogFinder(ctk.CTkFrame):
 
             # Determine tag based on the first 10 characters of log_folder
             tag = d[:10]
-            self.tree.insert("", "end", values=(d, date_str, cycle, "-"))
+            # insert with offset first, then log_folder, date, cycle_count
+            self.tree.insert("", "end", values=("-", d, date_str, cycle))
 
         # Sort the table by date first, then by log_folder
         self._sort_table(["date", "log_folder"], reverse=False)
