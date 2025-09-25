@@ -5,11 +5,8 @@ import os
 from datetime import datetime, timezone
 from .utils import get_matching_directories, process_log_files
 
-<<<<<<< HEAD
-=======
-# LOGS_DIRECTORY = r"\\fsnvemaffs\nve_maf\axcel\pwlrx_n69r"
->>>>>>> temp-branch
-LOGS_DIRECTORY = r"C:\Users\gohzu\Desktop\pwlrx_tkinter_minimalVibe\n69r"
+LOGS_DIRECTORY = r"\\fsnvemaffs\nve_maf\axcel\pwlrx_n69r"
+# LOGS_DIRECTORY = r"C:\Users\gohzu\Desktop\pwlrx_tkinter_minimalVibe\n69r"
 
 class LogFinder(ctk.CTkFrame):
     def __init__(self, parent):
@@ -35,17 +32,6 @@ class LogFinder(ctk.CTkFrame):
         heading_font = tkfont.Font(weight="bold", size=9)
         ttk.Style().configure("Treeview.Heading", font=heading_font)
 
-<<<<<<< HEAD
-        self.tree = ttk.Treeview(table_row, columns=("offset", "log_folder", "date", "cycle_count"), show="headings")
-        self.tree.heading("offset", text="Offset", anchor="center")
-        self.tree.heading("log_folder", text="Log Folder", anchor="center")
-        self.tree.heading("date", text="Date", anchor="center")
-        self.tree.heading("cycle_count", text="Cycle Count", anchor="center")
-        self.tree.column("offset", anchor="center")
-        self.tree.column("log_folder", width=400, anchor="center")
-        self.tree.column("date", width=150, anchor="center")
-        self.tree.column("cycle_count", anchor="center")
-=======
 
         self.tree = ttk.Treeview(table_row, columns=("offset", "log_folder", "date", "cycle_count"), show="headings")
         self.tree.heading("offset", text="Offset", anchor="center")
@@ -56,7 +42,6 @@ class LogFinder(ctk.CTkFrame):
         self.tree.column("log_folder", width=200, anchor="center")  # Center align values
         self.tree.column("date", width=100, anchor="center")  # Added new column width
         self.tree.column("cycle_count", width=50, anchor="center")
->>>>>>> temp-branch
         self.tree.pack(fill="both", expand=True)
 
         crunch_button = ctk.CTkButton(self, text="Crunch Data", command=self._crunch_data)
@@ -116,17 +101,13 @@ class LogFinder(ctk.CTkFrame):
                 print("process_log_files error for", folder_path, ":", e)
                 cycle_val = "-"
             cycle = cycle_val.split("_")[0] if "_" in cycle_val else cycle_val
-            self.tree.insert("", "end", values=("-", d, date_str, cycle))
 
-<<<<<<< HEAD
-=======
             # Determine tag based on the first 10 characters of log_folder
             tag = d[:10]
-            # insert with offset first, then log_folder, date, cycle_count
-            self.tree.insert("", "end", values=("-", d, date_str, cycle))
+            # single insert (removed duplicate insertion)
+            self.tree.insert("", "end", values=("-", d, date_str, cycle), tags=(tag,))
 
         # Sort the table by date first, then by log_folder
->>>>>>> temp-branch
         self._sort_table(["date", "log_folder"], reverse=False)
         if event is not None:
             return "break"
