@@ -36,7 +36,7 @@ class LogFinder(ctk.CTkFrame):
         ttk.Style().configure("Treeview.Heading", font=heading_font)
 
 
-        self.tree = ttk.Treeview(table_row, columns=("log_folder", "date", "cycle_count", "offset"), show="headings")
+        self.tree = ttk.Treeview(table_row, columns=("offset","log_folder", "date", "cycle_count"), show="headings")
         self.tree.heading("log_folder", text="Log Folder", anchor="center")
         self.tree.heading("date", text="Date", anchor="center")  # Added new column heading
         self.tree.heading("cycle_count", text="Cycle Count", anchor="center")
@@ -46,6 +46,10 @@ class LogFinder(ctk.CTkFrame):
         self.tree.column("cycle_count", anchor="center")  # Center align values
         self.tree.column("offset", anchor="center")  # Center align values
         self.tree.pack(fill="both", expand=True)
+
+        # Add "Crunch Data" button below the table
+        crunch_button = ctk.CTkButton(self, text="Crunch Data", command=self._crunch_data)
+        crunch_button.pack(pady=10)
 
         self._edit_entry = None
         self.tree.bind("<Double-1>", self._on_double_click)
@@ -86,18 +90,22 @@ class LogFinder(ctk.CTkFrame):
             tag = d[:10]
             self.tree.insert("", "end", values=(d, date_str, cycle, "-"))
 
-        # Sort the table by log_folder column after inserting rows
-        self._sort_table("log_folder", reverse=False)
+        # Sort the table by date first, then by log_folder
+        self._sort_table(["date", "log_folder"], reverse=False)
 
         # Prevent Text widget from inserting a newline when called from a key binding
         if event is not None:
             return "break"
 
-    def _sort_table(self, column, reverse):
-        # Get all rows from the tree
-        rows = [(self.tree.set(k, column), k) for k in self.tree.get_children("")]
+    def _sort_table(self, columns, reverse):
+        # Ensure columns is a list for multi-level sorting
+        if not isinstance(columns, list):
+            columns = [columns]
 
-        # Sort rows based on the column value
+        # Get all rows from the tree
+        rows = [(tuple(self.tree.set(k, col) for col in columns), k) for k in self.tree.get_children("")]
+
+        # Sort rows based on the column values
         rows.sort(reverse=reverse, key=lambda x: x[0])
 
         # Rearrange rows in the tree
@@ -162,3 +170,7 @@ class LogFinder(ctk.CTkFrame):
             # Destroy the entry widget
             self._edit_entry.destroy()
             self._edit_entry = None
+
+    def _crunch_data(self):
+        # Placeholder for the "Crunch Data" button functionality
+        print("Crunching data...")
