@@ -1,6 +1,8 @@
 import customtkinter as ctk
 from tkinter import ttk, font as tkfont
+import tkinter as tk
 import os
+from datetime import datetime, timezone
 from .utils import get_matching_directories, process_log_files
 
 # LOGS_DIRECTORY = r"C:\Users\gohzu\Desktop\pwlrx_tkinter_minimalVibe\n69r"
@@ -35,13 +37,18 @@ class LogFinder(ctk.CTkFrame):
         ttk.Style().configure("Treeview.Heading", font=heading_font)
 
 
-        self.tree = ttk.Treeview(table_row, columns=("log_folder", "cycle_count", "offset"), show="headings")
-        self.tree.heading("log_folder", text="Log Folder", anchor="center")
-        self.tree.heading("cycle_count", text="Cycle Count", anchor="center")
+        # Replace columns to include unix_time and a readable date column
+        self.tree = ttk.Treeview(table_row, columns=("offset", "log_folder", "unix_time", "date", "cycle_count"), show="headings")
         self.tree.heading("offset", text="Offset", anchor="center")
+        self.tree.heading("log_folder", text="Log Folder", anchor="center")
+        self.tree.heading("unix_time", text="Unix Time", anchor="center")  # new unix time column
+        self.tree.heading("date", text="Date", anchor="center")  # human-readable date
+        self.tree.heading("cycle_count", text="Cycle Count", anchor="center")
+        self.tree.column("offset", width=50, anchor="center")
         self.tree.column("log_folder", width=400, anchor="center")  # Center align values
+        self.tree.column("unix_time", width=120, anchor="center")  # width for unix time
+        self.tree.column("date", width=100, anchor="center")  # human-readable date width
         self.tree.column("cycle_count", anchor="center")  # Center align values
-        self.tree.column("offset", anchor="center")  # Center align values
         self.tree.pack(fill="both", expand=True)
 
         self._edit_entry = None
@@ -70,7 +77,22 @@ class LogFinder(ctk.CTkFrame):
 
             # Process log files and get cycle value
             cycle_val = process_log_files(files)
-            self.tree.insert("", "end", values=(d, cycle_val, "-"))
+            cycle = cycle_val.split("_")[0] if "_" in cycle_val else cycle_val
+
+            # Parse unix timestamp from folder name (last dot-separated token) and produce readable date
+            unix_time_str = "-"
+            date_str = "Invalid Date"
+            try:
+                ts_part = d.split(".")[-1]
+                timestamp = int(ts_part)
+                unix_time_str = str(timestamp)
+                date_str = datetime.fromtimestamp(timestamp, tz=timezone.utc).strftime('%m-%d %H:%M')
+            except Exception:
+                # leave defaults if parsing fails
+                pass
+
+            # Insert values in the new column order: offset, log_folder, unix_time, date, cycle_count
+            self.tree.insert("", "end", values=("-", d, unix_time_str, date_str, cycle))
 
         # Prevent Text widget from inserting a newline when called from a key binding
         if event is not None:
