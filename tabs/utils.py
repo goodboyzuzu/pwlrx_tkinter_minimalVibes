@@ -12,7 +12,7 @@ def process_log_files(files):
     Process log files to find the SELECTED_BLK_COUNT value.
     """
     end_marker = "(.)"
-    max_iterations = 20
+    max_iterations = 5
     for i, fp in enumerate(files):
         if i >= max_iterations:
             return "exceed max limit. find cycle value manually"
