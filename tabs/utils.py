@@ -4,8 +4,8 @@ def get_matching_directories(logs_directory, search_lines):
     """
     Get directories in the logs directory that match any of the search lines.
     """
-    dirs = (entry.name for entry in os.scandir(logs_directory) if entry.is_dir())
-    return [d for d in dirs for line in search_lines if d.startswith(line)]
+    dirs = [entry.name for entry in os.scandir(logs_directory) if entry.is_dir()]
+    return [d for line in search_lines for d in dirs if d.startswith(line)]
 
 def process_log_files(files):
     """
