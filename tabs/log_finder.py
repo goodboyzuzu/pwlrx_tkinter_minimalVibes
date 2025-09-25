@@ -58,29 +58,46 @@ class LogFinder(ctk.CTkFrame):
 
         self._selected_row_id = None
 
+        # perform initial search so table is populated on startup
+        try:
+            self._search_logs()
+        except Exception as e:
+            print("Initial search failed:", e)
+
     def _search_logs(self, event=None):
         self.tree.delete(*self.tree.get_children())
         lines = [line.strip() for line in self.textbox.get("1.0", "end").splitlines() if line.strip()]
 
         try:
             dirs = get_matching_directories(LOGS_DIRECTORY, lines)
-        except Exception:
+        except Exception as e:
+            print("get_matching_directories error:", e)
             dirs = []
+
+        if not dirs:
+            print("No matching directories found for lines:", lines)
 
         for d in dirs:
             folder_path = os.path.join(LOGS_DIRECTORY, d)
             try:
-                files = (os.path.join(folder_path, f) for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f)))
-            except Exception:
+                files = [os.path.join(folder_path, f) for f in os.listdir(folder_path)
+                         if os.path.isfile(os.path.join(folder_path, f))]
+            except Exception as e:
+                print("listdir error for", folder_path, ":", e)
                 files = []
 
             try:
                 timestamp = int(d.split(".")[-1])
                 date_str = datetime.fromtimestamp(timestamp, tz=timezone.utc).strftime('%m-%d %H:%M')
-            except ValueError:
+            except Exception as e:
+                print("timestamp parse error for", d, ":", e)
                 date_str = "Invalid Date"
 
-            cycle_val = process_log_files(files)
+            try:
+                cycle_val = process_log_files(files)
+            except Exception as e:
+                print("process_log_files error for", folder_path, ":", e)
+                cycle_val = "-"
             cycle = cycle_val.split("_")[0] if "_" in cycle_val else cycle_val
             self.tree.insert("", "end", values=("-", d, date_str, cycle))
 
