@@ -3,7 +3,8 @@ from tkinter import ttk, font as tkfont
 import os
 from .utils import get_matching_directories, process_log_files
 
-LOGS_DIRECTORY = R"C:\Users\gohzu\Desktop\pwlrx_tkinter_minimalVibe\n69r"
+# LOGS_DIRECTORY = r"C:\Users\gohzu\Desktop\pwlrx_tkinter_minimalVibe\n69r"
+LOGS_DIRECTORY = r"\\fsnvemaffs\nve_maf\axcel\pwlrx_n69r"
 
 class LogFinder(ctk.CTkFrame):
     def __init__(self, parent):
